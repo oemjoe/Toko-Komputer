@@ -8,7 +8,14 @@ const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyiUy0L7jY59
 const numberFormat = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 });
 
 function today() { return new Date().toISOString().slice(0, 10); }
-function nextNumber() { return String(Number(localStorage.getItem('toko-service-last-number') || '367') + 1).padStart(5, '0'); }
+function invoiceNumberValue(value) { const parsed = Number(String(value || '').replace(/\D/g, '')); return Number.isFinite(parsed) ? parsed : 0; }
+function nextNumber(records = []) {
+  const localLast = invoiceNumberValue(localStorage.getItem('toko-service-last-number') || '367');
+  const remoteLast = records.reduce((max, record) => Math.max(max, invoiceNumberValue(record.invoiceNumber || record.id)), 0);
+  const last = Math.max(localLast, remoteLast);
+  localStorage.setItem('toko-service-last-number', String(last));
+  return String(last + 1).padStart(5, '0');
+}
 function checkedValues(containerId) { return [...document.querySelectorAll(`#${containerId} input:checked`)].map((input) => input.value); }
 function setText(id, value, fallback = '-') { $(id).textContent = value || fallback; }
 function formatDate(value) { if (!value) return '-'; return new Date(`${value}T00:00:00`).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }); }
@@ -90,6 +97,8 @@ function saveToLocalDatabase(data) {
 }
 function saveToDatabase(data) {
   return saveToLocalDatabase(data).then(() => {
+    const savedNumber = invoiceNumberValue(data.invoiceNumber);
+    if (savedNumber > invoiceNumberValue(localStorage.getItem('toko-service-last-number'))) localStorage.setItem('toko-service-last-number', String(savedNumber));
     if (!sheetsUrl()) return { remote: false };
     return remoteRequest('save', { record: data }).then(() => ({ remote: true }));
   });
@@ -131,9 +140,10 @@ function refreshHistory() {
 }
 
 function newInvoice() {
-  const current = Number(localStorage.getItem('toko-service-last-number') || '367') + 1;
-  localStorage.setItem('toko-service-last-number', String(current));
-  $('invoiceForm').reset(); $('invoiceNumber').value = String(current).padStart(5, '0'); $('invoiceDate').value = today(); $('invoiceType').value = 'temporary'; render();
+  readAllInvoices().catch(() => []).then((invoices) => {
+    const current = nextNumber(invoices);
+    $('invoiceForm').reset(); $('invoiceNumber').value = current; $('invoiceDate').value = today(); $('invoiceType').value = 'temporary'; render();
+  });
 }
 
 document.querySelectorAll('#invoiceForm input, #invoiceForm textarea, #invoiceForm select').forEach((el) => { el.addEventListener('input', render); el.addEventListener('change', render); });
@@ -160,3 +170,4 @@ const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
 if (!localStorage.getItem(SHEETS_URL_KEY)) localStorage.setItem(SHEETS_URL_KEY, DEFAULT_SHEETS_URL);
 if (saved) applyData(saved); else { $('invoiceNumber').value = nextNumber(); $('invoiceDate').value = today(); $('invoiceType').value = 'temporary'; render(); }
 refreshHistory();
+if (!saved) readAllInvoices().then((invoices) => { $('invoiceNumber').value = nextNumber(invoices); render(); }).catch(() => {});
