@@ -23,6 +23,8 @@
     .service-type-preview .type-item { font-size: 9px; font-weight: 800; white-space: nowrap; }
     .service-type-preview .type-item:before { content: '□'; font-size: 17px; vertical-align: -2px; margin-right: 3px; }
     .service-type-preview .type-item.checked:before { content: '☑'; color: #159a8c; }
+    .service-type-strip { border: 1px solid #a6b9c3; padding: 7px 9px; display: flex; gap: 18px; align-items: center; margin-top: 3px; font-size: 9px; }
+    .service-type-strip > strong { white-space: nowrap; color: #0b4166; }
     .sheets-box { margin-top: 14px; padding-top: 12px; border-top: 1px solid #e2e3e5; }
     .sheets-box button { border: 0; border-radius: 8px; padding: 10px 13px; font-weight: 750; cursor: pointer; }
     .sheets-box .help-text { margin-top: 5px; }
@@ -149,7 +151,6 @@
         </header>
 
         <section class="invoice-meta">
-          <div class="service-type-preview" id="previewServiceTypes"></div>
           <dl>
             <div><dt>No. Nota</dt><dd id="previewNumber"></dd></div>
             <div><dt>Tgl.</dt><dd id="previewDate"></dd></div>
@@ -158,6 +159,7 @@
             <div><dt>Hp</dt><dd id="previewPhone"></dd></div>
           </dl>
         </section>
+        <section class="service-type-strip"><strong>JENIS LAYANAN</strong><div class="service-type-preview" id="previewServiceTypes"></div></section>
 
         <section class="checkbox-strip"><strong>KELENGKAPAN</strong><div id="previewAccessories"></div></section>
         <section class="invoice-body">
