@@ -3,7 +3,7 @@ const SHEET_NAME = 'Invoices';
 const HEADERS = [
   'id', 'invoiceNumber', 'invoiceDate', 'invoiceType', 'customerName', 'customerAddress',
   'customerPhone', 'device', 'serialNumber', 'accessories', 'issues', 'problemDescription',
-  'serviceFee', 'paymentStatus', 'notes', 'savedAt'
+  'serviceFee', 'paymentStatus', 'notes', 'savedAt', 'serviceTypes'
 ];
 
 function setup() {
@@ -34,6 +34,7 @@ function getSheet_() {
   let sheet = spreadsheet.getSheetByName(SHEET_NAME);
   if (!sheet) sheet = spreadsheet.insertSheet(SHEET_NAME);
   if (sheet.getLastRow() === 0) sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+  else if (sheet.getLastColumn() < HEADERS.length) sheet.getRange(1, sheet.getLastColumn() + 1, 1, HEADERS.length - sheet.getLastColumn()).setValues([HEADERS.slice(sheet.getLastColumn())]);
   return sheet;
 }
 
@@ -61,6 +62,7 @@ function readRecords_() {
     HEADERS.forEach((key, index) => { record[key] = row[index] instanceof Date ? Utilities.formatDate(row[index], Session.getScriptTimeZone(), 'yyyy-MM-dd') : row[index]; });
     record.accessories = record.accessories ? String(record.accessories).split(' | ') : [];
     record.issues = record.issues ? String(record.issues).split(' | ') : [];
+    record.serviceTypes = record.serviceTypes ? String(record.serviceTypes).split(' | ') : [];
     return record;
   });
 }

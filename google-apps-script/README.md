@@ -11,4 +11,6 @@ Script `Code.gs` menggunakan spreadsheet yang diberikan untuk menyimpan invoice 
 5. Pilih **Execute as: Me** dan akses **Anyone with the link**, lalu deploy.
 6. Salin URL berakhiran `/exec` ke kolom **URL Web App Google Apps Script** di aplikasi.
 
+Jika script sudah pernah dideploy sebelumnya, salin ulang versi terbaru `Code.gs`, simpan, lalu buka **Deploy → Manage deployments → Edit → New version → Deploy** agar kolom `serviceTypes` ikut dipakai.
+
 Spreadsheet tetap dapat dibiarkan private. Yang dibagikan ke aplikasi adalah URL Web App, bukan akses edit spreadsheet.
