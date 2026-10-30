@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Aplikasi nota service komputer sederhana" />
+  <title>Nota Service Komputer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <section class="panel form-panel">
+      <div class="app-heading">
+        <div class="brand-mark">HN</div>
+        <div>
+          <p class="eyebrow">APLIKASI NOTA SERVICE</p>
+          <h1>Nota Service Komputer</h1>
+          <p class="muted">Isi data di kiri, cek hasil nota di kanan.</p>
+        </div>
+      </div>
+
+      <form id="invoiceForm">
+        <div class="form-grid two-columns">
+          <label>No. Nota<input id="invoiceNumber" name="invoiceNumber" inputmode="numeric" /></label>
+          <label>Tanggal<input id="invoiceDate" name="invoiceDate" type="date" /></label>
+        </div>
+
+        <h2>Data pelanggan</h2>
+        <div class="form-grid">
+          <label>Nama pelanggan<input id="customerName" name="customerName" placeholder="Contoh: Uman" /></label>
+          <label>Alamat<textarea id="customerAddress" name="customerAddress" rows="2" placeholder="Alamat pelanggan"></textarea></label>
+          <label>No. HP<input id="customerPhone" name="customerPhone" inputmode="tel" placeholder="08xx xxxx xxxx" /></label>
+        </div>
+
+        <h2>Unit dan kelengkapan</h2>
+        <div class="form-grid two-columns">
+          <label>Merk / tipe<input id="device" name="device" placeholder="Lenovo ThinkPad" /></label>
+          <label>Nomor serial<input id="serialNumber" name="serialNumber" placeholder="Opsional" /></label>
+        </div>
+        <div class="check-grid" id="accessoriesGroup">
+          <label><input type="checkbox" value="Charger" /> Charger</label>
+          <label><input type="checkbox" value="CD/DVD" /> CD/DVD</label>
+          <label><input type="checkbox" value="Driver" /> Driver</label>
+          <label><input type="checkbox" value="Mouse" /> Mouse</label>
+          <label><input type="checkbox" value="Tas" /> Tas</label>
+        </div>
+
+        <h2>Kerusakan dan biaya</h2>
+        <div class="issue-list" id="issueGroup">
+          <label><input type="checkbox" value="Install ulang + aplikasi standar" /> Install ulang + aplikasi standar</label>
+          <label><input type="checkbox" value="Repair harddisk" /> Repair harddisk</label>
+          <label><input type="checkbox" value="Recovery data" /> Recovery data</label>
+          <label><input type="checkbox" value="Engsel casing rusak" /> Engsel casing rusak</label>
+          <label><input type="checkbox" value="Mati total" /> Mati total</label>
+          <label><input type="checkbox" value="Instalasi jaringan LAN" /> Instalasi jaringan LAN</label>
+        </div>
+        <label>Keterangan kerusakan<textarea id="problemDescription" name="problemDescription" rows="4" placeholder="Jelaskan keluhan atau kondisi unit"></textarea></label>
+        <div class="form-grid two-columns">
+          <label>Biaya service<input id="serviceFee" name="serviceFee" type="number" min="0" step="1000" placeholder="0" /></label>
+          <label>Status pembayaran<select id="paymentStatus" name="paymentStatus"><option>Lunas</option><option>DP</option><option>Belum dibayar</option></select></label>
+        </div>
+        <label>Catatan tambahan<textarea id="notes" name="notes" rows="2" placeholder="Garansi, estimasi selesai, atau catatan lain"></textarea></label>
+
+        <div class="actions">
+          <button type="button" class="secondary" id="newInvoice">Nota baru</button>
+          <button type="button" class="secondary" id="saveDraft">Simpan draft</button>
+          <button type="button" class="primary" id="printInvoice">Cetak / PDF</button>
+        </div>
+        <p class="help-text" id="saveMessage" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="preview-area">
+      <div class="preview-toolbar"><span>Pratinjau cetak</span><span class="status-dot">Tersimpan otomatis di browser</span></div>
+      <article class="invoice-paper" id="invoicePaper">
+        <header class="invoice-header">
+          <div class="service-badge">NOTA SERVICE</div>
+          <div class="store-brand">
+            <div class="logo-circle">HN</div>
+            <div>
+              <h2>Hero Notebook Bandung</h2>
+              <p>Spesialis Computer, Laptop, Repair</p>
+              <p>Jual beli Laptop & Komputer</p>
+              <p>Pengadaan Laptop & Komputer</p>
+            </div>
+          </div>
+          <div class="store-contact">
+            <p>Cabang 1. Jl. Pungkur - Jl. Moh Toha ITC KEBON KALAPA Lt. 3 Blok EK2. No 1 Bandung</p>
+            <p>Cabang 2. Jl. Daeng M. Ardiwinata (Cihanjuang 85 C) - Cimahi Utara</p>
+            <strong>WhatsApp: 0823-1503-4082 · 0819-4735-6509</strong>
+          </div>
+        </header>
+
+        <section class="invoice-meta">
+          <div class="social-icons"><span>◉</span><span>◎</span><span>▣</span></div>
+          <dl>
+            <div><dt>No. Nota</dt><dd id="previewNumber"></dd></div>
+            <div><dt>Tgl.</dt><dd id="previewDate"></dd></div>
+            <div><dt>Kepada Yth.</dt><dd id="previewCustomer"></dd></div>
+            <div><dt>Alamat</dt><dd id="previewAddress"></dd></div>
+            <div><dt>Hp</dt><dd id="previewPhone"></dd></div>
+          </dl>
+        </section>
+
+        <section class="checkbox-strip"><strong>KELENGKAPAN</strong><div id="previewAccessories"></div></section>
+        <section class="invoice-body">
+          <div class="damage-column"><h3>JENIS KERUSAKAN</h3><div id="previewIssues"></div></div>
+          <div class="description-column"><h3>KETERANGAN KERUSAKAN</h3><p id="previewDescription"></p><div class="device-line"><strong>UNIT:</strong> <span id="previewDevice"></span><span id="previewSerial"></span></div></div>
+        </section>
+        <div class="fee-row"><strong>BIAYA SERVICE</strong><span id="previewFee"></span></div>
+        <div class="warning-box"><strong>PERHATIAN !!!</strong><ul><li>Barang yang tidak diambil dalam 3 bulan bukan tanggung jawab kami.</li><li>Garansi berlaku sesuai ketentuan dan tidak berlaku jika segel rusak.</li><li>Barang yang telah selesai service diambil paling lambat 30 hari.</li><li>Garansi software tidak termasuk kerusakan hardware.</li></ul></div>
+        <div class="signature-row"><div><span>Konsumen</span><div class="signature-space"></div><b id="previewSignName"></b></div><div><span>Status</span><div class="signature-space payment-stamp" id="previewPayment"></div></div><div><span>Hormat kami</span><div class="signature-space"></div><b>Hero Notebook Bandung</b></div></div>
+        <p class="notes-line" id="previewNotes"></p>
+      </article>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
