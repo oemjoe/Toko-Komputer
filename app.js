@@ -4,6 +4,7 @@ const DB_NAME = 'cimahi-service-komputer-db';
 const DB_VERSION = 1;
 const STORE_NAME = 'invoices';
 const SHEETS_URL_KEY = 'cimahi-service-google-sheets-url';
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyiUy0L7jY59nUwbNVTTv5qRf7s8u-IlNSjnRvkfyaVhIX56Rx_aOulwP0XmfhZAGKe/exec';
 const numberFormat = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 });
 
 function today() { return new Date().toISOString().slice(0, 10); }
@@ -11,7 +12,7 @@ function nextNumber() { return String(Number(localStorage.getItem('toko-service-
 function checkedValues(containerId) { return [...document.querySelectorAll(`#${containerId} input:checked`)].map((input) => input.value); }
 function setText(id, value, fallback = '-') { $(id).textContent = value || fallback; }
 function formatDate(value) { if (!value) return '-'; return new Date(`${value}T00:00:00`).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }); }
-function sheetsUrl() { return ($('sheetsUrl').value || localStorage.getItem(SHEETS_URL_KEY) || '').trim(); }
+function sheetsUrl() { return ($('sheetsUrl').value || localStorage.getItem(SHEETS_URL_KEY) || DEFAULT_SHEETS_URL).trim(); }
 
 function openDatabase() {
   return new Promise((resolve, reject) => {
@@ -154,5 +155,6 @@ $('loadInvoice').addEventListener('click', () => {
 });
 
 const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+if (!localStorage.getItem(SHEETS_URL_KEY)) localStorage.setItem(SHEETS_URL_KEY, DEFAULT_SHEETS_URL);
 if (saved) applyData(saved); else { $('invoiceNumber').value = nextNumber(); $('invoiceDate').value = today(); $('invoiceType').value = 'temporary'; render(); }
 refreshHistory();
