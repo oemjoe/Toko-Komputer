@@ -15,6 +15,14 @@
     .qr-signature { display: flex; flex-direction: column; align-items: center; gap: 2px; }
     .qr-signature #qrcode { height: 58px; margin: 3px 0; }
     .wet-signature { height: 45px; }
+    .service-type-form { display: flex; flex-wrap: wrap; gap: 8px; margin: 5px 0 8px; }
+    .service-type-form > span { width: 100%; font-size: 12px; font-weight: 650; color: #4c5057; }
+    .service-type-form label { display: flex; align-items: center; gap: 7px; margin: 0; padding: 7px 10px; border: 1px solid #d7e2e8; border-radius: 7px; font-weight: 600; }
+    .service-type-form input { width: auto; margin: 0; accent-color: #159a8c; }
+    .service-type-preview { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .service-type-preview .type-item { font-size: 9px; font-weight: 800; white-space: nowrap; }
+    .service-type-preview .type-item:before { content: '□'; font-size: 17px; vertical-align: -2px; margin-right: 3px; }
+    .service-type-preview .type-item.checked:before { content: '☑'; color: #159a8c; }
     .sheets-box { margin-top: 14px; padding-top: 12px; border-top: 1px solid #e2e3e5; }
     .sheets-box button { border: 0; border-radius: 8px; padding: 10px 13px; font-weight: 750; cursor: pointer; }
     .sheets-box .help-text { margin-top: 5px; }
@@ -59,6 +67,12 @@
           <label>Tanggal<input id="invoiceDate" name="invoiceDate" type="date" /></label>
         </div>
         <label>Jenis nota<select id="invoiceType" name="invoiceType"><option value="temporary">Nota service sementara</option><option value="final">Invoice service final</option></select></label>
+        <div class="service-type-form" id="serviceTypeGroup">
+          <span>Jenis layanan</span>
+          <label><input type="checkbox" value="Check Up" /> Check Up</label>
+          <label><input type="checkbox" value="Service" /> Service</label>
+          <label><input type="checkbox" value="Garansi" /> Garansi</label>
+        </div>
 
         <h2>Data pelanggan</h2>
         <div class="form-grid">
@@ -135,7 +149,7 @@
         </header>
 
         <section class="invoice-meta">
-          <div class="social-icons"><span>◉</span><span>◎</span><span>▣</span></div>
+          <div class="service-type-preview" id="previewServiceTypes"></div>
           <dl>
             <div><dt>No. Nota</dt><dd id="previewNumber"></dd></div>
             <div><dt>Tgl.</dt><dd id="previewDate"></dd></div>

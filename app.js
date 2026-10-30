@@ -30,6 +30,7 @@ function collectData() {
     invoiceNumber: $('invoiceNumber').value,
     invoiceDate: $('invoiceDate').value,
     invoiceType: $('invoiceType').value,
+    serviceTypes: checkedValues('serviceTypeGroup'),
     customerName: $('customerName').value,
     customerAddress: $('customerAddress').value,
     customerPhone: $('customerPhone').value,
@@ -47,7 +48,7 @@ function collectData() {
 
 function applyData(data) {
   ['invoiceNumber','invoiceDate','invoiceType','customerName','customerAddress','customerPhone','device','serialNumber','problemDescription','serviceFee','paymentStatus','notes'].forEach((key) => { if (data[key] !== undefined) $(key).value = data[key]; });
-  ['accessories','issues'].forEach((key) => document.querySelectorAll(`#${key === 'accessories' ? 'accessoriesGroup' : 'issueGroup'} input`).forEach((input) => { input.checked = (data[key] || []).includes(input.value); }));
+  ['accessories','issues','serviceTypes'].forEach((key) => document.querySelectorAll(`#${key === 'accessories' ? 'accessoriesGroup' : key === 'issues' ? 'issueGroup' : 'serviceTypeGroup'} input`).forEach((input) => { input.checked = (data[key] || []).includes(input.value); }));
   render();
 }
 
@@ -70,6 +71,7 @@ function render() {
   setText('previewPaymentTemporary', data.paymentStatus); setText('previewPaymentFinal', data.paymentStatus); setText('previewNotes', data.notes ? `Catatan: ${data.notes}` : '');
   $('previewAccessories').innerHTML = ['Charger','CD/DVD','Driver','Mouse','Tas'].map((value) => `<span class="small-check ${data.accessories.includes(value) ? 'checked' : ''}">${value}</span>`).join('');
   $('previewIssues').innerHTML = ['Install ulang + aplikasi standar','Repair harddisk','Recovery data','Engsel casing rusak','Mati total','Instalasi jaringan LAN'].map((value) => `<span class="damage-item ${data.issues.includes(value) ? 'checked' : ''}">${value}</span>`).join('');
+  $('previewServiceTypes').innerHTML = ['Check Up','Service','Garansi'].map((value) => `<span class="type-item ${data.serviceTypes.includes(value) ? 'checked' : ''}">${value}</span>`).join('');
   $('temporarySignatureRow').style.display = temporary ? 'grid' : 'none';
   $('finalSignatureRow').style.display = temporary ? 'none' : 'grid';
   $('digitalNotice').style.display = temporary ? 'block' : 'none';
