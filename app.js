@@ -3,6 +3,7 @@ const STORAGE_KEY = 'toko-service-invoice-draft';
 const DB_NAME = 'cimahi-service-komputer-db';
 const DB_VERSION = 1;
 const STORE_NAME = 'invoices';
+const SHEETS_URL_KEY = 'cimahi-service-google-sheets-url';
 const numberFormat = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 });
 
 function today() { return new Date().toISOString().slice(0, 10); }
@@ -10,6 +11,7 @@ function nextNumber() { return String(Number(localStorage.getItem('toko-service-
 function checkedValues(containerId) { return [...document.querySelectorAll(`#${containerId} input:checked`)].map((input) => input.value); }
 function setText(id, value, fallback = '-') { $(id).textContent = value || fallback; }
 function formatDate(value) { if (!value) return '-'; return new Date(`${value}T00:00:00`).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }); }
+function sheetsUrl() { return ($('sheetsUrl').value || localStorage.getItem(SHEETS_URL_KEY) || '').trim(); }
 
 function openDatabase() {
   return new Promise((resolve, reject) => {
@@ -75,7 +77,7 @@ function render() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-function saveToDatabase(data) {
+function saveToLocalDatabase(data) {
   return openDatabase().then((db) => new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE_NAME, 'readwrite');
     transaction.objectStore(STORE_NAME).put(data);
@@ -83,14 +85,30 @@ function saveToDatabase(data) {
     transaction.onerror = () => { db.close(); reject(transaction.error || new Error('Nota tidak dapat disimpan.')); };
   }));
 }
-function readAllInvoices() {
+function saveToDatabase(data) {
+  return saveToLocalDatabase(data).then(() => {
+    if (!sheetsUrl()) return { remote: false };
+    return remoteRequest('save', { record: data }).then(() => ({ remote: true }));
+  });
+}
+function readAllLocalInvoices() {
   return openDatabase().then((db) => new Promise((resolve, reject) => {
     const request = db.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME).getAll();
     request.onsuccess = () => { db.close(); resolve(request.result.sort((a, b) => String(b.savedAt).localeCompare(String(a.savedAt)))); };
     request.onerror = () => { db.close(); reject(request.error); };
   }));
 }
+function remoteRequest(action, payload = {}) {
+  const url = sheetsUrl();
+  if (!url) return Promise.reject(new Error('URL Google Apps Script belum diisi.'));
+  return fetch(url, { method: action === 'list' ? 'GET' : 'POST', headers: action === 'list' ? undefined : { 'Content-Type': 'text/plain;charset=utf-8' }, body: action === 'list' ? undefined : JSON.stringify({ action, ...payload }) }).then((response) => { if (!response.ok) throw new Error('Google Sheets tidak merespons.'); return response.json(); });
+}
+function readAllInvoices() {
+  if (!sheetsUrl()) return readAllLocalInvoices();
+  return remoteRequest('list').then((result) => result.records || []).catch(() => readAllLocalInvoices());
+}
 function readInvoice(id) {
+  if (sheetsUrl()) return readAllInvoices().then((invoices) => invoices.find((invoice) => invoice.id === id));
   return openDatabase().then((db) => new Promise((resolve, reject) => {
     const request = db.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME).get(id);
     request.onsuccess = () => { db.close(); resolve(request.result); };
@@ -120,7 +138,14 @@ $('printInvoice').addEventListener('click', () => { render(); window.print(); })
 $('newInvoice').addEventListener('click', newInvoice);
 $('saveDraft').addEventListener('click', () => {
   const data = collectData();
-  saveToDatabase(data).then(() => { render(); refreshHistory(); $('saveMessage').textContent = 'Nota tersimpan di database lokal browser.'; setTimeout(() => $('saveMessage').textContent = '', 3000); }).catch((error) => { $('saveMessage').textContent = error.message; });
+  saveToDatabase(data).then((result) => { render(); refreshHistory(); $('saveMessage').textContent = result.remote ? 'Nota tersimpan di lokal dan Google Sheets.' : 'Nota tersimpan di database lokal browser.'; setTimeout(() => $('saveMessage').textContent = '', 3000); }).catch((error) => { $('saveMessage').textContent = `Lokal tersimpan, tetapi Google Sheets gagal: ${error.message}`; });
+});
+$('sheetsUrl').value = localStorage.getItem(SHEETS_URL_KEY) || '';
+$('sheetsUrl').addEventListener('change', () => { localStorage.setItem(SHEETS_URL_KEY, $('sheetsUrl').value.trim()); refreshHistory(); });
+$('syncSheets').addEventListener('click', () => {
+  const url = sheetsUrl();
+  if (!url) { $('saveMessage').textContent = 'Isi URL Web App Google Apps Script terlebih dahulu.'; return; }
+  readAllLocalInvoices().then((invoices) => Promise.all(invoices.map((invoice) => remoteRequest('save', { record: invoice })))).then(() => { refreshHistory(); $('saveMessage').textContent = 'Data lokal berhasil disinkronkan ke Google Sheets.'; }).catch((error) => { $('saveMessage').textContent = `Sinkronisasi gagal: ${error.message}`; });
 });
 $('loadInvoice').addEventListener('click', () => {
   const id = $('invoiceHistory').value;

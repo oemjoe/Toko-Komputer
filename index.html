@@ -15,6 +15,9 @@
     .qr-signature { display: flex; flex-direction: column; align-items: center; gap: 2px; }
     .qr-signature #qrcode { height: 58px; margin: 3px 0; }
     .wet-signature { height: 45px; }
+    .sheets-box { margin-top: 14px; padding-top: 12px; border-top: 1px solid #e2e3e5; }
+    .sheets-box button { border: 0; border-radius: 8px; padding: 10px 13px; font-weight: 750; cursor: pointer; }
+    .sheets-box .help-text { margin-top: 5px; }
     #finalSignatureRow, #finalNotice { display: none; }
   </style>
 </head>
@@ -82,6 +85,11 @@
         <div class="history-box">
           <label>Riwayat nota tersimpan<select id="invoiceHistory"><option value="">Pilih nota untuk dibuka</option></select></label>
           <button type="button" class="secondary" id="loadInvoice">Buka nota</button>
+        </div>
+        <div class="sheets-box">
+          <label>URL Web App Google Apps Script<input id="sheetsUrl" name="sheetsUrl" placeholder="https://script.google.com/macros/s/.../exec" /></label>
+          <button type="button" class="secondary" id="syncSheets">Sinkronkan ke Google Sheets</button>
+          <p class="help-text">Tempel URL deployment Apps Script agar nota tersimpan ke spreadsheet pusat.</p>
         </div>
       </form>
     </section>
