@@ -111,7 +111,7 @@ function readAllInvoices() {
   return remoteRequest('list').then((result) => result.records || []).catch(() => readAllLocalInvoices());
 }
 function readInvoice(id) {
-  if (sheetsUrl()) return readAllInvoices().then((invoices) => invoices.find((invoice) => invoice.id === id));
+  if (sheetsUrl()) return readAllInvoices().then((invoices) => invoices.find((invoice) => String(invoice.id) === String(id)));
   return openDatabase().then((db) => new Promise((resolve, reject) => {
     const request = db.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME).get(id);
     request.onsuccess = () => { db.close(); resolve(request.result); };
