@@ -3,7 +3,8 @@ const SHEET_NAME = 'Invoices';
 const HEADERS = [
   'id', 'invoiceNumber', 'invoiceDate', 'invoiceType', 'customerName', 'customerAddress',
   'customerPhone', 'device', 'serialNumber', 'accessories', 'issues', 'problemDescription',
-  'serviceFee', 'paymentStatus', 'notes', 'savedAt', 'serviceTypes'
+  'serviceFee', 'paymentStatus', 'notes', 'savedAt', 'serviceTypes',
+  'partsItems', 'laborItems', 'partsTotal', 'laborTotal', 'grandTotal'
 ];
 
 function setup() {
@@ -43,7 +44,11 @@ function saveRecord_(record) {
   lock.waitLock(15000);
   try {
     const sheet = getSheet_();
-    const row = HEADERS.map((key) => Array.isArray(record[key]) ? record[key].join(' | ') : (record[key] ?? ''));
+    const row = HEADERS.map((key) => {
+      const value = record[key];
+      if (Array.isArray(value)) return value.some((item) => item && typeof item === 'object') ? JSON.stringify(value) : value.join(' | ');
+      return value ?? '';
+    });
     const values = sheet.getDataRange().getValues();
     const idIndex = HEADERS.indexOf('id');
     const existingRow = values.findIndex((value, index) => index > 0 && String(value[idIndex]) === String(record.id));
@@ -63,8 +68,17 @@ function readRecords_() {
     record.accessories = record.accessories ? String(record.accessories).split(' | ') : [];
     record.issues = record.issues ? String(record.issues).split(' | ') : [];
     record.serviceTypes = record.serviceTypes ? String(record.serviceTypes).split(' | ') : [];
+    record.partsItems = parseJsonArray_(record.partsItems);
+    record.laborItems = parseJsonArray_(record.laborItems);
+    ['partsTotal', 'laborTotal', 'grandTotal'].forEach((key) => { record[key] = Number(record[key]) || 0; });
     return record;
   });
+}
+
+function parseJsonArray_(value) {
+  if (!value) return [];
+  try { const parsed = JSON.parse(String(value)); return Array.isArray(parsed) ? parsed : []; }
+  catch (error) { return []; }
 }
 
 function json_(payload) {
