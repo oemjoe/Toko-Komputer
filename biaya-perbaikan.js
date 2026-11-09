@@ -96,12 +96,18 @@ if (typeof module !== "undefined" && module.exports) module.exports = { calculat
       ? rows.map(function (x) { return "<tr><td>" + x.kind + "</td><td>" + esc(x.name || "-") + "</td><td>" + x.qty + "</td><td>" + money.format(x.qty * x.price) + "</td></tr>"; }).join("")
       : '<tr><td colspan="4">Belum ada rincian biaya</td></tr>';
     fee.value = String(totals.laborTotal);
+    if (typeof window.collectData === "function") {
+      try { localStorage.setItem("toko-service-invoice-draft", JSON.stringify(window.collectData())); } catch (error) {}
+    }
   }
   section.addEventListener("click", function (event) {
     var button = event.target.closest("[data-add]"); if (!button) return;
     document.getElementById(button.dataset.add === "parts" ? "partsRows" : "laborRows").appendChild(rowMarkup(button.dataset.add));
     update();
   });
+
+  var newInvoiceButton = document.getElementById("newInvoice");
+  if (newInvoiceButton) newInvoiceButton.addEventListener("click", function () { setRows("parts", []); setRows("labor", []); update(); });
 
   var oldCollect = window.collectData;
   if (typeof oldCollect === "function") window.collectData = function () {
