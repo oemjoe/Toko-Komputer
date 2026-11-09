@@ -22,3 +22,14 @@ Lalu buka <http://localhost:8080>.
 Aplikasi memiliki database lokal browser dan dapat disinkronkan ke spreadsheet Google. Ikuti panduan pada `google-apps-script/README.md`, deploy `Code.gs` sebagai Web App, lalu tempel URL `/exec` pada kolom URL Google Apps Script di aplikasi.
 
 Klik **Simpan ke DB** untuk menyimpan lokal dan mengirim ke Google Sheets jika URL sudah diisi. Tombol **Sinkronkan ke Google Sheets** mengirim seluruh riwayat lokal.
+
+
+## Tes otomatis
+
+Tes perhitungan rincian biaya dapat dijalankan dengan Node.js 22 atau lebih baru:
+
+```bash
+node --test
+```
+
+GitHub Actions menjalankan tes yang sama setiap ada push ke `main` atau pull request menuju `main`.
