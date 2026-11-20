@@ -11,15 +11,23 @@ const DETAIL_HEADERS = [
   'invoiceId', 'invoiceNumber', 'jenis', 'namaRincian',
   'qty', 'hargaSatuan', 'subtotal', 'savedAt'
 ];
+const PROCUREMENT_SHEET_NAME = 'Procurements';
+const PROCUREMENT_HEADERS = [
+  'id', 'docNumber', 'docDate', 'docType', 'customerName', 'customerAddress',
+  'customerPic', 'customerPhone', 'items', 'ppnRate', 'subtotal', 'ppn',
+  'grandTotal', 'paymentStatus', 'validUntil', 'notes', 'savedAt'
+];
 
 function setup() {
   getSheet_();
   getDetailSheet_();
+  getProcurementSheet_();
 }
 
 function doGet(e) {
   const action = (e && e.parameter && e.parameter.action) || 'list';
   if (action === 'list') return json_({ ok: true, records: readRecords_() });
+  if (action === 'listProcurements') return json_({ ok: true, records: readProcurements_() });
   return json_({ ok: false, error: 'Action tidak dikenali.' });
 }
 
@@ -28,6 +36,10 @@ function doPost(e) {
     const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     if (body.action === 'save' && body.record) {
       saveRecord_(body.record);
+      return json_({ ok: true });
+    }
+    if (body.action === 'saveProcurement' && body.record) {
+      saveProcurementRecord_(body.record);
       return json_({ ok: true });
     }
     return json_({ ok: false, error: 'Payload tidak valid.' });
@@ -49,6 +61,14 @@ function getDetailSheet_() {
   let sheet = spreadsheet.getSheetByName(DETAIL_SHEET_NAME);
   if (!sheet) sheet = spreadsheet.insertSheet(DETAIL_SHEET_NAME);
   ensureHeaders_(sheet, DETAIL_HEADERS);
+  return sheet;
+}
+
+function getProcurementSheet_() {
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = spreadsheet.getSheetByName(PROCUREMENT_SHEET_NAME);
+  if (!sheet) sheet = spreadsheet.insertSheet(PROCUREMENT_SHEET_NAME);
+  ensureHeaders_(sheet, PROCUREMENT_HEADERS);
   return sheet;
 }
 
@@ -79,8 +99,8 @@ function saveRecord_(record) {
       const value = record[key];
       // Detail baru disimpan sebagai baris terpisah pada sheet DetailPerbaikan.
       if (key === 'partsItems' || key === 'laborItems') return '';
-      if (Array.isArray(value)) return value.join(' | ');
-      return value ?? '';
+      if (Array.isArray(value)) return sanitizeCell_(value.join(' | '));
+      return sanitizeCell_(value ?? '');
     });
     const values = sheet.getDataRange().getValues();
     const idIndex = HEADERS.indexOf('id');
@@ -113,14 +133,44 @@ function saveRecord_(record) {
   }
 }
 
+function saveProcurementRecord_(record) {
+  if (!record || record.id === undefined || record.id === null || String(record.id).trim() === '') {
+    throw new Error('Nomor/ID pengadaan wajib tersedia.');
+  }
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    const sheet = getProcurementSheet_();
+    const row = PROCUREMENT_HEADERS.map((key) => {
+      const value = record[key];
+      if (key === 'items') return JSON.stringify(Array.isArray(value) ? value : []);
+      if (Array.isArray(value)) return sanitizeCell_(value.join(' | '));
+      return sanitizeCell_(value ?? '');
+    });
+    const values = sheet.getDataRange().getValues();
+    const idIndex = PROCUREMENT_HEADERS.indexOf('id');
+    const existingRow = values.findIndex((value, index) => index > 0 && String(value[idIndex]) === String(record.id));
+    if (existingRow > 0) sheet.getRange(existingRow + 1, 1, 1, row.length).setValues([row]);
+    else sheet.getRange(sheet.getLastRow() + 1, 1, 1, row.length).setValues([row]);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function makeDetailRow_(record, kind, item, savedAt) {
   const qty = Math.max(0, Number(item && item.qty) || 0);
   const price = Math.max(0, Number(item && item.price) || 0);
   return [
-    record.id, record.invoiceNumber || record.id, kind,
-    item && item.name ? String(item.name) : '',
+    sanitizeCell_(record.id), sanitizeCell_(record.invoiceNumber || record.id), kind,
+    sanitizeCell_(item && item.name ? String(item.name) : ''),
     qty, price, qty * price, savedAt
   ];
+}
+
+function sanitizeCell_(value) {
+  // Cegah string pengguna berawalan formula agar tidak dieksekusi Google Sheets.
+  if (typeof value === 'string' && /^[=+\-@\t\r]/.test(value)) return "'" + value;
+  return value;
 }
 
 function readRecords_() {
@@ -162,6 +212,24 @@ function readRecords_() {
       record.laborTotal = record.laborItems.reduce((sum, item) => sum + (Number(item.qty) || 0) * (Number(item.price) || 0), 0);
     }
     if (!record.grandTotal) record.grandTotal = record.partsTotal + record.laborTotal;
+    return record;
+  });
+}
+
+function readProcurements_() {
+  const values = getProcurementSheet_().getDataRange().getValues();
+  if (values.length < 2) return [];
+  return values.slice(1).filter((row) => row[0]).map((row) => {
+    const record = {};
+    PROCUREMENT_HEADERS.forEach((key, index) => {
+      record[key] = row[index] instanceof Date
+        ? Utilities.formatDate(row[index], Session.getScriptTimeZone(), 'yyyy-MM-dd')
+        : row[index];
+    });
+    record.items = parseJsonArray_(record.items);
+    ['ppnRate', 'subtotal', 'ppn', 'grandTotal'].forEach((key) => {
+      record[key] = Number(record[key]) || 0;
+    });
     return record;
   });
 }

@@ -4,6 +4,7 @@ const PROC_LAST_KEY = 'toko-pengadaan-last-number';
 const PROC_DB_NAME = 'cimahi-service-komputer-db';
 const PROC_DB_VERSION = 2;
 const PROC_STORE = 'procurements';
+const PROC_SHEETS_KEY = 'cimahi-service-google-sheets-url';
 const procMoney = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 });
 
 function procEl(id) { return document.getElementById(id); }
@@ -49,12 +50,49 @@ function saveProcRecord(record) {
   }));
 }
 
-function readAllProcRecords() {
+function readLocalProcRecords() {
   return openProcDb().then((db) => new Promise((resolve, reject) => {
     const request = db.transaction(PROC_STORE, 'readonly').objectStore(PROC_STORE).getAll();
     request.onsuccess = () => { db.close(); resolve(request.result.sort((a, b) => String(b.savedAt).localeCompare(String(a.savedAt)))); };
     request.onerror = () => { db.close(); reject(request.error || new Error('Riwayat tidak dapat dibaca.')); };
   }));
+}
+
+function procSheetsUrl() {
+  const fallback = typeof DEFAULT_SHEETS_URL === 'string' ? DEFAULT_SHEETS_URL : '';
+  return (localStorage.getItem(PROC_SHEETS_KEY) || procEl('procSheetsUrl').value || fallback || '').trim();
+}
+
+function remoteProcRequest(action, payload = {}) {
+  const url = procSheetsUrl();
+  if (!url) return Promise.reject(new Error('URL Google Apps Script belum diisi.'));
+  const list = action === 'listProcurements';
+  const target = list ? `${url}${url.includes('?') ? '&' : '?'}action=listProcurements&t=${Date.now()}` : url;
+  const options = list
+    ? { method: 'GET' }
+    : { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, ...payload }) };
+  return fetch(target, options)
+    .then((response) => { if (!response.ok) throw new Error('Google Sheets tidak merespons.'); return response.json(); })
+    .then((result) => {
+      if (!result || result.ok === false) throw new Error((result && result.error) || 'Google Sheets menolak permintaan.');
+      return result;
+    });
+}
+
+function mergeProcRecords(localRecords, remoteRecords) {
+  const merged = new Map();
+  remoteRecords.forEach((record) => { if (record && record.id != null) merged.set(String(record.id), record); });
+  localRecords.forEach((record) => merged.set(String(record.id), record));
+  return [...merged.values()].sort((a, b) => String(b.savedAt).localeCompare(String(a.savedAt)));
+}
+
+function readAllProcRecords() {
+  return readLocalProcRecords().catch(() => []).then((localRecords) => {
+    if (!procSheetsUrl()) return localRecords;
+    return remoteProcRequest('listProcurements')
+      .then((result) => mergeProcRecords(localRecords, result.records || []))
+      .catch(() => localRecords);
+  });
 }
 
 function nextProcNumber(records = [], docType = 'invoice') {
@@ -289,9 +327,30 @@ function saveProcurement() {
   saveProcRecord(data).then(() => {
     const savedNumber = procNumberValue(data.docNumber);
     if (savedNumber > procNumberValue(localStorage.getItem(PROC_LAST_KEY) || '0')) localStorage.setItem(PROC_LAST_KEY, String(savedNumber));
-    procMessage('Pengadaan tersimpan di database lokal browser.');
+    if (!procSheetsUrl()) {
+      procMessage('Pengadaan tersimpan di database lokal browser.');
+      refreshProcHistory();
+      return;
+    }
+    return remoteProcRequest('saveProcurement', { record: data }).then(() => {
+      procMessage('Pengadaan tersimpan di lokal dan Google Sheets.');
+      refreshProcHistory();
+    }).catch((error) => {
+      procMessage(`Tersimpan lokal, tetapi Google Sheets gagal: ${error.message}`);
+      refreshProcHistory();
+    });
+  }).catch((error) => { procMessage(`Gagal menyimpan lokal: ${error.message}`); });
+}
+
+function syncProcurements() {
+  if (!procSheetsUrl()) { procMessage('Isi URL Web App Google Apps Script terlebih dahulu.'); return; }
+  readLocalProcRecords().then((records) => {
+    if (!records.length) return 0;
+    return Promise.all(records.map((record) => remoteProcRequest('saveProcurement', { record }))).then(() => records.length);
+  }).then((count) => {
+    procMessage(count ? `${count} nota pengadaan disinkronkan ke Google Sheets.` : 'Belum ada nota lokal untuk disinkronkan.');
     refreshProcHistory();
-  }).catch((error) => { procMessage(`Gagal menyimpan: ${error.message}`); });
+  }).catch((error) => { procMessage(`Sinkronisasi gagal: ${error.message}`); });
 }
 
 procEl('procurementForm').addEventListener('input', renderProc);
@@ -319,6 +378,21 @@ procEl('loadProcurement').addEventListener('click', () => {
     applyProcData(record);
     procMessage(`Nota ${record.docNumber} dibuka.`);
   }).catch(() => { procMessage('Nota tidak dapat dibuka.'); });
+});
+procEl('syncProcurement').addEventListener('click', syncProcurements);
+procEl('procSheetsUrl').value = localStorage.getItem(PROC_SHEETS_KEY) || (typeof DEFAULT_SHEETS_URL === 'string' ? DEFAULT_SHEETS_URL : '');
+procEl('procSheetsUrl').addEventListener('change', () => {
+  const value = procEl('procSheetsUrl').value.trim();
+  localStorage.setItem(PROC_SHEETS_KEY, value);
+  const serviceUrl = document.getElementById('sheetsUrl');
+  if (serviceUrl) serviceUrl.value = value;
+  refreshProcHistory();
+});
+window.addEventListener('app:viewchange', (event) => {
+  if (!event.detail || event.detail.view !== 'procurement') return;
+  const stored = localStorage.getItem(PROC_SHEETS_KEY) || (typeof DEFAULT_SHEETS_URL === 'string' ? DEFAULT_SHEETS_URL : '');
+  procEl('procSheetsUrl').value = stored;
+  refreshProcHistory();
 });
 window.addEventListener('afterprint', () => {
   const pageStyle = procEl('procPageStyle');

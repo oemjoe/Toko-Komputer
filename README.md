@@ -19,7 +19,7 @@ Lalu buka <http://localhost:8080>.
 
 ## Menu Pengadaan
 
-Aplikasi memiliki dua menu: **Service** dan **Pengadaan**. Menu pengadaan membuat nota/invoice pengadaan atau surat penawaran harga dengan rincian barang, PPN, total, pratinjau, cetak/PDF, dan riwayat nota yang tersimpan di database browser. Data pengadaan belum disinkronkan ke Google Sheets.
+Aplikasi memiliki dua menu: **Service** dan **Pengadaan**. Menu pengadaan membuat nota/invoice pengadaan atau surat penawaran harga dengan rincian barang, PPN, total, pratinjau, cetak/PDF, dan riwayat nota. Data pengadaan disimpan di database browser dan dapat disinkronkan ke tab `Procurements` pada spreadsheet yang sama melalui Web App Google Apps Script.
 
 ## Database Google Sheets
 

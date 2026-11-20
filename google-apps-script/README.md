@@ -1,6 +1,6 @@
 # Google Sheets database
 
-Script `Code.gs` menggunakan spreadsheet yang diberikan untuk menyimpan invoice pada tab `Invoices`.
+Script `Code.gs` menyimpan invoice service pada tab `Invoices` dan `DetailPerbaikan`, serta nota pengadaan pada tab `Procurements`.
 
 ## Deployment pertama
 
@@ -11,6 +11,6 @@ Script `Code.gs` menggunakan spreadsheet yang diberikan untuk menyimpan invoice 
 5. Pilih **Execute as: Me** dan akses **Anyone with the link**, lalu deploy.
 6. Salin URL berakhiran `/exec` ke kolom **URL Web App Google Apps Script** di aplikasi.
 
-Jika script sudah pernah dideploy sebelumnya, salin ulang versi terbaru `Code.gs`, simpan, lalu buka **Deploy → Manage deployments → Edit → New version → Deploy** agar kolom `serviceTypes` ikut dipakai.
+Jika script sudah pernah dideploy sebelumnya, salin ulang versi terbaru `Code.gs`, simpan, lalu buka **Deploy → Manage deployments → Edit → Version: New version → Deploy** agar kolom `serviceTypes` dan action pengadaan (`saveProcurement`/`listProcurements`) ikut dipakai. URL `/exec` tetap sama bila memakai deployment yang sudah ada.
 
 Spreadsheet tetap dapat dibiarkan private. Yang dibagikan ke aplikasi adalah URL Web App, bukan akses edit spreadsheet.
