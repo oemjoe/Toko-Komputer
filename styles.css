@@ -47,6 +47,7 @@
 .proc-summary .grand strong{color:#0b4166}
 .proc-terms{display:flex;flex-direction:column;gap:2px;font-size:9.5px;color:#4c5b67;margin-top:10px}
 .proc-signature{grid-template-columns:1fr 1fr;margin-top:16px}
+.qr-signature #procQrcode{height:58px;margin:3px 0;border:1px solid #d9e5eb;padding:2px;background:#fff}
 
 @media(max-width:620px){.top-nav-inner{padding:9px 12px}.top-brand small{display:none}.menu-tab{padding:7px 14px}.proc-row-meta{grid-template-columns:56px 70px 1fr auto}.proc-row-subtotal{min-width:64px;font-size:10px}.proc-paper{padding:20px 16px}}
 

@@ -214,6 +214,19 @@ function collectProcData() {
   };
 }
 
+function procQrPayload(data) {
+  const label = data.docType === 'quotation' ? 'Penawaran' : 'Pengadaan';
+  return `Nama toko: Cimahi Service Komputer\nNo. ${label}: ${data.docNumber || '-'}\nTanggal: ${procFormatDate(data.docDate)}`;
+}
+
+function renderProcQr(data) {
+  const container = procEl('procQrcode');
+  if (!container) return;
+  container.replaceChildren();
+  if (!window.QRCode) return;
+  new QRCode(container, { text: procQrPayload(data), width: 58, height: 58, colorDark: '#202226', colorLight: '#ffffff' });
+}
+
 function renderProc() {
   const data = collectProcData();
   const quotation = data.docType === 'quotation';
@@ -267,6 +280,7 @@ function renderProc() {
   procEl('procPreviewNotice').textContent = quotation
     ? 'Dokumen penawaran ini dibuat secara digital. Harga dapat berubah setelah masa penawaran berakhir.'
     : 'Dokumen pengadaan ini dibuat secara digital. Garansi mengikuti ketentuan toko.';
+  renderProcQr(data);
 
   try { localStorage.setItem(PROC_DRAFT_KEY, JSON.stringify(data)); } catch (error) {}
 }
