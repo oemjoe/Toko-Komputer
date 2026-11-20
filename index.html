@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Aplikasi nota service komputer sederhana" />
-  <title>Nota Service Komputer</title>
+  <meta name="description" content="Aplikasi nota service dan pengadaan komputer" />
+  <title>Nota Service &amp; Pengadaan Komputer</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
     .digital-notice, .final-notice { font-size: 9px; line-height: 1.35; margin: 8px 0 0; padding: 6px 8px; border: 1px solid #d7a2a5; background: #fff7f7; color: #8d2028; }
@@ -52,7 +52,19 @@
   </style>
 </head>
 <body>
-  <main class="app-shell">
+  <header class="top-nav">
+    <div class="top-nav-inner">
+      <div class="top-brand">
+        <img src="assets/cimahi-service-logo-mark.png" alt="" />
+        <span><strong>Cimahi Service Komputer</strong><small>Nota service &amp; pengadaan</small></span>
+      </div>
+      <nav class="menu-tabs" role="tablist" aria-label="Menu aplikasi">
+        <button type="button" class="menu-tab is-active" role="tab" id="tabService" aria-selected="true" aria-controls="serviceView" data-view="service">Service</button>
+        <button type="button" class="menu-tab" role="tab" id="tabProcurement" aria-selected="false" aria-controls="procurementView" data-view="procurement">Pengadaan</button>
+      </nav>
+    </div>
+  </header>
+  <main class="app-shell view is-active" id="serviceView">
     <section class="panel form-panel">
       <div class="app-heading">
         <div class="brand-mark"><img src="assets/cimahi-service-logo-mark.png" alt="Logo Cimahi Service Komputer" /></div>
@@ -176,8 +188,119 @@
       </article>
     </section>
   </main>
+
+  <main class="app-shell view" id="procurementView">
+    <section class="panel form-panel">
+      <div class="app-heading">
+        <div class="brand-mark"><img src="assets/cimahi-service-logo-mark.png" alt="Logo Cimahi Service Komputer" /></div>
+        <div>
+          <p class="eyebrow">APLIKASI PENGADAAN</p>
+          <h1>Nota Pengadaan</h1>
+          <p class="muted">Susun rincian barang, cetak nota, dan simpan riwayat.</p>
+        </div>
+      </div>
+
+      <form id="procurementForm">
+        <div class="form-grid two-columns">
+          <label>No. Nota<input id="procNumber" name="procNumber" /></label>
+          <label>Tanggal<input id="procDate" name="procDate" type="date" /></label>
+        </div>
+        <div class="form-grid two-columns">
+          <label>Jenis dokumen<select id="procType" name="procType"><option value="invoice">Nota / Invoice Pengadaan</option><option value="quotation">Surat Penawaran Harga</option></select></label>
+          <label>Status pembayaran<select id="procPayment" name="procPayment"><option>Lunas</option><option>DP</option><option>Belum dibayar</option></select></label>
+        </div>
+
+        <h2>Data pelanggan</h2>
+        <label>Nama instansi / pelanggan<input id="procCustomer" name="procCustomer" placeholder="Contoh: PT Maju Bersama" /></label>
+        <div class="form-grid">
+          <label>Alamat<textarea id="procAddress" name="procAddress" rows="2" placeholder="Alamat instansi"></textarea></label>
+          <label>UP / PIC<input id="procPic" name="procPic" placeholder="Nama penanggung jawab" /></label>
+          <label>Kontak<input id="procPhone" name="procPhone" placeholder="08xx atau email" /></label>
+        </div>
+
+        <h2>Rincian barang</h2>
+        <div class="proc-rows" id="procRows"></div>
+        <button type="button" class="proc-add" id="addProcItem">+ Tambah barang</button>
+        <div class="proc-totals">
+          <div class="cost-subtotal"><span>Subtotal</span><strong id="procSubtotal">Rp0</strong></div>
+          <div class="cost-subtotal"><span>PPN (%)<input class="inline-number" id="procPpnRate" type="number" min="0" max="100" step="0.1" value="11" /></span><strong id="procPpnTotal">Rp0</strong></div>
+          <div class="cost-subtotal grand-total"><span>Total</span><strong id="procGrandTotal">Rp0</strong></div>
+        </div>
+        <div class="proc-extra">
+          <label>Berlaku hingga (untuk penawaran)<input id="procValidUntil" name="procValidUntil" type="date" /></label>
+          <label>Catatan / syarat tambahan<textarea id="procNotes" name="procNotes" rows="2" placeholder="Waktu pengiriman, garansi, termin pembayaran"></textarea></label>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="secondary" id="newProcurement">Pengadaan baru</button>
+          <button type="button" class="secondary" id="saveProcurement">Simpan ke DB</button>
+          <button type="button" class="primary" id="printProcurement">Cetak / PDF</button>
+        </div>
+        <p class="help-text" id="procMessage" aria-live="polite"></p>
+        <div class="history-box">
+          <label>Riwayat pengadaan<select id="procHistory"><option value="">Pilih nota untuk dibuka</option></select></label>
+          <button type="button" class="secondary" id="loadProcurement">Buka nota</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="preview-area">
+      <div class="preview-toolbar"><span>Pratinjau cetak</span><span class="status-dot">Tersimpan otomatis di browser</span></div>
+      <article class="invoice-paper proc-paper" id="procPaper">
+        <header class="invoice-header">
+          <div class="service-badge" id="procPreviewBadge">NOTA PENGADAAN</div>
+          <div class="store-brand">
+            <div class="logo-circle logo-image"><img src="assets/cimahi-service-logo-mark.png" alt="Logo Cimahi Service Komputer" /></div>
+            <div>
+              <h2>Cimahi Service Komputer</h2>
+              <p>Spesialis Computer, Laptop, Repair</p>
+              <p>Jual beli Laptop &amp; Komputer</p>
+              <p>Pengadaan Laptop &amp; Komputer</p>
+            </div>
+          </div>
+          <div class="store-contact">
+            <p>Cabang 1. Jl. Pungkur - Jl. Moh Toha ITC KEBON KALAPA Lt. 3 Blok EK2 Bandung</p>
+            <p>Cabang 2. Jln. Kolmas KM.3, Komplek GACC Blok G No. 8, Cimahi Utara</p>
+          </div>
+        </header>
+
+        <section class="invoice-meta">
+          <dl>
+            <div><dt>No.</dt><dd id="procPreviewNumber"></dd></div>
+            <div><dt>Tgl.</dt><dd id="procPreviewDate"></dd></div>
+            <div><dt>Kepada</dt><dd id="procPreviewCustomer"></dd></div>
+            <div><dt>Alamat</dt><dd id="procPreviewAddress"></dd></div>
+            <div><dt>UP</dt><dd id="procPreviewPic"></dd></div>
+            <div><dt>Kontak</dt><dd id="procPreviewPhone"></dd></div>
+            <div id="procMetaPayment"><dt>Status</dt><dd id="procPreviewPayment"></dd></div>
+            <div id="procMetaValidity"><dt>Berlaku</dt><dd id="procPreviewValidity"></dd></div>
+          </dl>
+        </section>
+
+        <table class="proc-table">
+          <thead><tr><th>No</th><th>Nama Barang / Spesifikasi</th><th class="num">Qty</th><th>Satuan</th><th class="num">Harga</th><th class="num">Subtotal</th></tr></thead>
+          <tbody id="procPreviewRows"></tbody>
+        </table>
+
+        <div class="proc-summary">
+          <div><span>Subtotal</span><strong id="procPreviewSubtotal">Rp0</strong></div>
+          <div><span>PPN <span id="procPreviewPpnRate">11</span>%</span><strong id="procPreviewPpn">Rp0</strong></div>
+          <div class="grand"><span>Total</span><strong id="procPreviewGrand">Rp0</strong></div>
+        </div>
+        <div class="proc-terms" id="procPreviewTerms"></div>
+
+        <div class="signature-row proc-signature">
+          <div><span id="procSignatureLeftLabel">Pelanggan</span><div class="signature-space"></div><b id="procSignatureLeftName"></b></div>
+          <div><span>Hormat kami</span><div class="signature-space wet-signature"></div><b>Cimahi Service Komputer</b></div>
+        </div>
+        <p class="notes-line" id="procPreviewNotes"></p>
+        <p class="digital-notice" id="procPreviewNotice"></p>
+      </article>
+    </section>
+  </main>
   <script src="qrcode.min.js"></script>
   <script src="app.js"></script>
   <script src="biaya-perbaikan.js"></script>
+  <script src="pengadaan.js"></script>
 </body>
 </html>

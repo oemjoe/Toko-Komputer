@@ -1,7 +1,7 @@
 const $ = (id) => document.getElementById(id);
 const STORAGE_KEY = 'toko-service-invoice-draft';
 const DB_NAME = 'cimahi-service-komputer-db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'invoices';
 const SHEETS_URL_KEY = 'cimahi-service-google-sheets-url';
 const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyiUy0L7jY59nUwbNVTTv5qRf7s8u-IlNSjnRvkfyaVhIX56Rx_aOulwP0XmfhZAGKe/exec';
@@ -25,7 +25,11 @@ function openDatabase() {
   return new Promise((resolve, reject) => {
     if (!window.indexedDB) { reject(new Error('Browser ini tidak mendukung database lokal.')); return; }
     const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onupgradeneeded = () => request.result.createObjectStore(STORE_NAME, { keyPath: 'id' });
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      if (!db.objectStoreNames.contains('procurements')) db.createObjectStore('procurements', { keyPath: 'id' });
+    };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error || new Error('Database tidak dapat dibuka.'));
   });
@@ -147,7 +151,12 @@ function newInvoice() {
 }
 
 document.querySelectorAll('#invoiceForm input, #invoiceForm textarea, #invoiceForm select').forEach((el) => { el.addEventListener('input', render); el.addEventListener('change', render); });
-$('printInvoice').addEventListener('click', () => { render(); window.print(); });
+$('printInvoice').addEventListener('click', () => {
+  render();
+  const procPageStyle = document.getElementById('procPageStyle');
+  if (procPageStyle) procPageStyle.remove();
+  window.print();
+});
 $('newInvoice').addEventListener('click', newInvoice);
 $('saveDraft').addEventListener('click', () => {
   const data = collectData();
@@ -171,3 +180,18 @@ if (!localStorage.getItem(SHEETS_URL_KEY)) localStorage.setItem(SHEETS_URL_KEY, 
 if (saved) applyData(saved); else { $('invoiceNumber').value = nextNumber(); $('invoiceDate').value = today(); $('invoiceType').value = 'temporary'; render(); }
 refreshHistory();
 if (!saved) readAllInvoices().then((invoices) => { $('invoiceNumber').value = nextNumber(invoices); render(); }).catch(() => {});
+
+function showView(view) {
+  document.querySelectorAll('.view').forEach((element) => element.classList.toggle('is-active', element.id === `${view}View`));
+  document.querySelectorAll('.menu-tabs [data-view]').forEach((tab) => {
+    const active = tab.dataset.view === view;
+    tab.classList.toggle('is-active', active);
+    tab.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  const procPageStyle = document.getElementById('procPageStyle');
+  if (procPageStyle) procPageStyle.remove();
+  window.dispatchEvent(new CustomEvent('app:viewchange', { detail: { view } }));
+}
+document.querySelectorAll('.menu-tabs [data-view]').forEach((tab) => {
+  tab.addEventListener('click', () => showView(tab.dataset.view));
+});

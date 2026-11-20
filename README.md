@@ -17,6 +17,10 @@ Lalu buka <http://localhost:8080>.
 - **Nota service sementara**: menampilkan keterangan invoice digital dan QR berisi nama toko, nomor nota, serta tanggal.
 - **Invoice service final**: menghilangkan keterangan digital dan QR, serta menampilkan area tanda tangan basah dan stempel.
 
+## Menu Pengadaan
+
+Aplikasi memiliki dua menu: **Service** dan **Pengadaan**. Menu pengadaan membuat nota/invoice pengadaan atau surat penawaran harga dengan rincian barang, PPN, total, pratinjau, cetak/PDF, dan riwayat nota yang tersimpan di database browser. Data pengadaan belum disinkronkan ke Google Sheets.
+
 ## Database Google Sheets
 
 Aplikasi memiliki database lokal browser dan dapat disinkronkan ke spreadsheet Google. Ikuti panduan pada `google-apps-script/README.md`, deploy `Code.gs` sebagai Web App, lalu tempel URL `/exec` pada kolom URL Google Apps Script di aplikasi.

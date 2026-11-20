@@ -96,6 +96,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = { calculat
       ? rows.map(function (x) { return "<tr><td>" + x.kind + "</td><td>" + esc(x.name || "-") + "</td><td>" + x.qty + "</td><td>" + money.format(x.qty * x.price) + "</td></tr>"; }).join("")
       : '<tr><td colspan="4">Belum ada rincian biaya</td></tr>';
     fee.value = String(totals.laborTotal);
+    var previewFee = document.getElementById("previewFee");
+    if (previewFee) previewFee.textContent = money.format(totals.laborTotal);
     if (typeof window.collectData === "function") {
       try { localStorage.setItem("toko-service-invoice-draft", JSON.stringify(window.collectData())); } catch (error) {}
     }
